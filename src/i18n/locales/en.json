@@ -1,0 +1,89 @@
+{
+  "common": {
+    "appName": "Kameti",
+    "continue": "Continue",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading…",
+    "back": "Back"
+  },
+  "status": {
+    "draft": "Draft",
+    "active": "Active",
+    "completed": "Completed"
+  },
+  "offline": {
+    "banner": "You're offline. Showing saved data.",
+    "bannerA11y": "You are offline. The app is showing saved data and changes need an internet connection."
+  },
+  "auth": {
+    "signIn": {
+      "title": "Welcome to Kameti",
+      "subtitle": "Enter your mobile number. We'll send you a 6-digit code by SMS.",
+      "phoneLabel": "Mobile number",
+      "phonePlaceholder": "0300 1234567",
+      "phoneHint": "Pakistani mobile number",
+      "submit": "Send code"
+    },
+    "verify": {
+      "title": "Enter the code",
+      "subtitle": "We sent a 6-digit code to {{phone}}.",
+      "codeLabel": "6-digit code",
+      "submit": "Verify",
+      "resend": "Send a new code",
+      "resendIn": "You can request a new code in {{seconds}} s",
+      "resent": "A new code is on its way.",
+      "changeNumber": "Change number"
+    },
+    "profile": {
+      "title": "What's your name?",
+      "subtitle": "Committee members will see this name.",
+      "nameLabel": "Your name",
+      "submit": "Save and continue"
+    },
+    "signOut": "Sign out"
+  },
+  "home": {
+    "title": "My committees",
+    "emptyTitle": "No committees yet",
+    "emptyBody": "When an organizer adds your mobile number to a committee, it will appear here.",
+    "perMonth": "{{amount}} / month",
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "organizerBadge": "Organizer",
+    "settings": "Settings",
+    "committeeA11y": "{{name}}, {{status}}, {{amount}} per month, {{members}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account",
+    "name": "Name",
+    "phone": "Mobile number",
+    "version": "Version {{version}}"
+  },
+  "states": {
+    "errorTitle": "Something went wrong",
+    "errorBody": "Please check your connection and try again."
+  },
+  "validation": {
+    "phone_required": "Enter your mobile number.",
+    "phone_invalid": "Enter a valid Pakistani mobile number, like 0300 1234567.",
+    "otp_invalid": "Enter the 6-digit code.",
+    "name_required": "Enter your name.",
+    "name_too_long": "Name can be up to 60 characters."
+  },
+  "errors": {
+    "network": "No internet connection. Check your connection and try again.",
+    "otp_invalid": "That code is wrong or has expired. Request a new one.",
+    "rate_limited": "Too many attempts. Please wait a minute and try again.",
+    "sms_failed": "We couldn't send the SMS. Check the number and try again.",
+    "unknown": "Something went wrong. Please try again.",
+    "committee_full": "This committee already has all its members.",
+    "committee_not_draft": "This committee has started, so members can't be changed.",
+    "committee_locked": "This committee has started, so its terms can't be changed.",
+    "turn_out_of_range": "That turn number doesn't exist in this committee.",
+    "duplicate_phone": "This mobile number is already in the committee.",
+    "not_allowed": "You don't have permission to do that."
+  }
+}

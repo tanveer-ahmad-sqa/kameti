@@ -1,0 +1,9 @@
+node_modules
+.expo
+dist
+ios
+android
+supabase/.temp
+supabase/.branches
+src/types/database.types.ts
+*.sql

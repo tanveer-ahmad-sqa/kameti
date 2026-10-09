@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Type-check, lint, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Dummy values: unit tests never reach a backend.
+      EXPO_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-dummy-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
+
+  database:
+    name: Migrations + RLS tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start Postgres and apply migrations + seed
+        run: supabase db start
+      - name: Run pgTAP tests
+        run: supabase test db
+      - name: Check generated types are up to date
+        run: |
+          supabase gen types typescript --local > /tmp/database.types.ts
+          diff -u src/types/database.types.ts /tmp/database.types.ts

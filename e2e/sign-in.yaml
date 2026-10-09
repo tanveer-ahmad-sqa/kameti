@@ -1,0 +1,28 @@
+# Maestro E2E: sign in with a local test number and see seeded committees.
+# Prereqs: `npm run db:reset` (loads seed.sql) and a dev build running on a simulator/emulator.
+# Run: maestro test e2e/sign-in.yaml
+appId: pk.kameti.app.dev
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Welcome to Kameti'
+- tapOn:
+    id: 'sign-in-phone'
+- inputText: '0300 2222222'
+- tapOn: 'Send code'
+- assertVisible: 'Enter the code'
+- tapOn:
+    id: 'verify-code'
+- inputText: '123456'
+# First sign-in for this number: profile setup.
+- assertVisible: "What's your name?"
+- tapOn:
+    id: 'profile-name'
+- inputText: 'Bilal'
+- tapOn: 'Save and continue'
+# Bilal was added to "Office Kameti" by phone before signing up: auto-linked.
+- assertVisible: 'My committees'
+- assertVisible: 'Office Kameti'
+- tapOn: 'Settings'
+- tapOn: 'Sign out'
+- assertVisible: 'Welcome to Kameti'
