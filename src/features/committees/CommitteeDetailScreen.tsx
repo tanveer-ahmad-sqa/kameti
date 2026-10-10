@@ -4,45 +4,48 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText, Badge, Button, Card, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
 import { useUserId } from '@/features/auth/authStore';
-import { useMembers, type Member } from '@/features/members/api';
-import { useActivateCommittee, useCycles } from '@/features/payout/api';
+import { Dashboard } from '@/features/dashboard/Dashboard';
+import type { Member } from '@/features/members/api';
+import type { Payment } from '@/features/payments/api';
+import { useActivateCommittee, type Cycle } from '@/features/payout/api';
 import { confirm } from '@/lib/confirm';
-import { addCalendarMonths, currentMonthInKarachi, formatCalendarDate, formatMonth } from '@/lib/dates';
+import { addCalendarMonths, currentMonthInKarachi, formatMonth } from '@/lib/dates';
 import { errorKey } from '@/lib/errors';
 import { spacing } from '@/theme/tokens';
 import { formatPKR, potAmount } from '@shared/money';
 
-import { useCommittee, useDeleteCommittee, useOrganizerName, type Committee } from './api';
+import { useDeleteCommittee, useOrganizerName, type Committee } from './api';
+import { useCommitteeData } from './useCommitteeData';
 
 const STATUS_TONE = { draft: 'neutral', active: 'primary', completed: 'success' } as const;
 
 export function CommitteeDetailScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const committee = useCommittee(id);
-  const members = useMembers(id);
+  const data = useCommitteeData(id);
   const organizerName = useOrganizerName(id);
 
   const refresh = () => {
-    void committee.refetch();
-    void members.refetch();
+    data.refresh();
     void organizerName.refetch();
   };
 
   return (
     <>
-      <Stack.Screen options={{ title: committee.data?.name ?? '' }} />
-      <Screen onRefresh={refresh} refreshing={committee.isRefetching || members.isRefetching}>
-        {committee.data ? (
+      <Stack.Screen options={{ title: data.committee?.name ?? '' }} />
+      <Screen onRefresh={refresh} refreshing={data.refreshing}>
+        {data.committee && (!data.started || data.ready) ? (
           <CommitteeOverview
-            committee={committee.data}
-            members={members.data}
+            committee={data.committee}
+            members={data.members}
+            cycles={data.cycles ?? []}
+            payments={data.payments ?? []}
             organizerName={organizerName.data ?? null}
           />
-        ) : committee.data === null ? (
+        ) : data.notFound ? (
           <EmptyState title={t('committee.detail.notFound')} />
-        ) : committee.isError ? (
-          <ErrorState error={committee.error} onRetry={refresh} />
+        ) : data.error ? (
+          <ErrorState error={data.error} onRetry={refresh} />
         ) : (
           <LoadingState />
         )}
@@ -54,10 +57,14 @@ export function CommitteeDetailScreen() {
 function CommitteeOverview({
   committee,
   members,
+  cycles,
+  payments,
   organizerName,
 }: {
   committee: Committee;
   members: Member[] | undefined;
+  cycles: Cycle[];
+  payments: Payment[];
   organizerName: string | null;
 }) {
   const { t } = useTranslation();
@@ -66,7 +73,6 @@ function CommitteeOverview({
   const activate = useActivateCommittee(committee.id);
   const isOrganizer = committee.organizer_id === userId;
   const isDraft = committee.status === 'draft';
-  const cycles = useCycles(committee.id, !isDraft);
   const memberCount = members?.length;
   const allAdded = memberCount !== undefined && memberCount >= committee.member_count;
   const assignedTurns = members?.filter((m) => m.turn_number !== null).length ?? 0;
@@ -76,8 +82,6 @@ function CommitteeOverview({
   const canStart = isOrganizer && isDraft && orderComplete && !startMonthPassed;
   const me = members?.find((m) => m.user_id === userId);
   const myMonth = me?.turn_number ? addCalendarMonths(committee.start_month, me.turn_number - 1) : null;
-  const nextCycle = cycles.data?.find((cycle) => cycle.payout_status === 'pending');
-  const nextRecipient = nextCycle ? members?.find((m) => m.id === nextCycle.recipient_member_id) : undefined;
   const memberChoosesMonth =
     isDraft && !isOrganizer && committee.payout_order_method === 'member_choice' && Boolean(me);
 
@@ -112,6 +116,31 @@ function CommitteeOverview({
       </View>
 
       {committee.description ? <AppText tone="muted">{committee.description}</AppText> : null}
+
+      {!isDraft && members ? (
+        <>
+          <Dashboard
+            committee={committee}
+            members={members}
+            cycles={cycles}
+            payments={payments}
+            userId={userId}
+          />
+          <View style={styles.nav}>
+            <Button
+              testID="committee-payments"
+              label={t('dashboard.viewPayments')}
+              onPress={() => router.push(`/committee/${committee.id}/payments`)}
+            />
+            <Button
+              testID="committee-history"
+              variant="secondary"
+              label={t('dashboard.viewHistory')}
+              onPress={() => router.push(`/committee/${committee.id}/history`)}
+            />
+          </View>
+        </>
+      ) : null}
 
       <Card>
         <InfoRow
@@ -157,17 +186,9 @@ function CommitteeOverview({
         </AppText>
       ) : null}
 
-      {myMonth ? (
+      {isDraft && myMonth ? (
         <AppText variant="bodyStrong" tone="warning">
           {t('committee.detail.yourMonth', { month: formatMonth(myMonth) })}
-        </AppText>
-      ) : null}
-      {nextCycle && nextRecipient ? (
-        <AppText>
-          {t('committee.detail.nextPayout', {
-            name: nextRecipient.is_former_user ? t('members.formerName') : nextRecipient.display_name,
-            date: formatCalendarDate(nextCycle.payout_date),
-          })}
         </AppText>
       ) : null}
 
@@ -216,6 +237,12 @@ function CommitteeOverview({
           onPress={() => router.push(`/committee/${committee.id}/order`)}
         />
       ) : null}
+      <Button
+        testID="committee-activity"
+        variant="secondary"
+        label={t('dashboard.viewActivity')}
+        onPress={() => router.push(`/committee/${committee.id}/activity`)}
+      />
       <Button
         testID="committee-schedule"
         variant="secondary"
@@ -271,6 +298,9 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  nav: {
+    gap: spacing.sm,
+  },
   badges: {
     flexDirection: 'row',
     gap: spacing.sm,

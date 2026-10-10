@@ -62,6 +62,8 @@ function useInvalidateCommittee(committeeId: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.members.list(committeeId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.cycles.list(committeeId) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.draws.list(committeeId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.payments.list(committeeId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.activity.list(committeeId) }),
     ]);
 }
 

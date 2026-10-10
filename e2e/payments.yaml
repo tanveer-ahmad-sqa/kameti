@@ -1,0 +1,66 @@
+# Maestro E2E: a member taps "I've paid", the organizer confirms it, and it shows in history.
+# Prereqs: run e2e/start-committee.yaml first (it starts "Office Kameti"), with the dev build
+# and `npm run functions:serve` still running.
+# Run: maestro test e2e/payments.yaml
+appId: pk.kameti.app.dev
+---
+# Bilal (member) claims his payment.
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'sign-in-phone'
+- inputText: '0300 2222222'
+- tapOn: 'Send code'
+- tapOn:
+    id: 'verify-code'
+- inputText: '123456'
+- runFlow:
+    when:
+      visible: "What's your name?"
+    commands:
+      - tapOn:
+          id: 'profile-name'
+      - inputText: 'Bilal'
+      - tapOn: 'Save and continue'
+- tapOn: 'Office Kameti'
+- tapOn:
+    id: 'dashboard-claim'
+- tapOn: 'JazzCash'
+- tapOn:
+    id: 'payment-note'
+- inputText: 'TID 998877'
+- tapOn:
+    id: 'payment-form-submit'
+- assertVisible: 'Waiting for confirmation'
+
+# Ayesha (organizer) confirms it.
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'sign-in-phone'
+- inputText: '0300 1111111'
+- tapOn: 'Send code'
+- tapOn:
+    id: 'verify-code'
+- inputText: '123456'
+- tapOn: 'Office Kameti'
+- assertVisible: '1 payment waiting for your confirmation'
+- tapOn:
+    id: 'dashboard-payments'
+- tapOn: 'Confirm'
+- tapOn:
+    id: 'payment-form-submit'
+- assertVisible: 'Paid'
+
+# History and activity show it.
+- back
+- tapOn:
+    id: 'committee-history'
+- assertVisible: '.*via JazzCash.*'
+- back
+- scrollUntilVisible:
+    element:
+      id: 'committee-activity'
+- tapOn:
+    id: 'committee-activity'
+- assertVisible: "Ayesha confirmed Bilal's payment for month 1"

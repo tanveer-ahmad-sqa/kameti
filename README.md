@@ -84,6 +84,7 @@ Reset the database to this state at any time with `npm run db:reset`.
 - signing in, with automatic linking to a committee (`sign-in.yaml`)
 - creating a committee and adding a member (`create-committee.yaml`)
 - the server-side draw, starting a committee and a payout (`start-committee.yaml`, which also needs `npm run functions:serve`)
+- a member claiming a payment and the organizer confirming it (`payments.yaml`, run after `start-committee.yaml`)
 
 **Database changes:** never edit an applied migration. Create a new one with `npx supabase migration new <name>`, run `npm run db:reset && npm run db:test && npm run db:types`, and commit the regenerated types (CI checks they are up to date).
 
@@ -119,12 +120,13 @@ You need: a Supabase project, a Twilio account with a Verify service, an Expo ac
    npx supabase link --project-ref <your-project-ref>
    npx supabase db push            # applies supabase/migrations (NOT seed.sql)
    ```
-3. Deploy the Edge Functions: `npx supabase functions deploy draw-payout-order`. The Supabase URL and keys are provided to functions automatically, so no secrets need setting.
-4. **Project Settings → API keys:** copy the **Project URL** and the **Publishable key**. These become `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-5. **Authentication → Sign In / Providers:**
+3. Scheduled jobs: the migrations enable `pg_cron` and schedule the nightly late-payment job (00:05 Pakistan time). Check it under **Database → Cron Jobs**. If your plan has `pg_cron` disabled, enable it under **Database → Extensions** and run `npx supabase db push` again.
+4. Deploy the Edge Functions: `npx supabase functions deploy draw-payout-order`. The Supabase URL and keys are provided to functions automatically, so no secrets need setting.
+5. **Project Settings → API keys:** copy the **Project URL** and the **Publishable key**. These become `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+6. **Authentication → Sign In / Providers:**
    - **Email:** disable it (the app is phone-only).
    - **Phone:** enable it and allow new users to sign up. The SMS provider is set up in step 2 below.
-6. **Authentication → Rate limits:** keep SMS limits conservative (e.g. 30/hour) to control SMS cost and abuse.
+7. **Authentication → Rate limits:** keep SMS limits conservative (e.g. 30/hour) to control SMS cost and abuse.
 
 ### 2. Twilio Verify (SMS codes)
 

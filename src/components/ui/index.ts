@@ -9,3 +9,4 @@ export { SelectField, type SelectOption } from './SelectField';
 export { EmptyState, ErrorState, LoadingState } from './StateViews';
 export { SwitchRow } from './SwitchRow';
 export { TextField } from './TextField';
+export { ProgressBar } from './ProgressBar';

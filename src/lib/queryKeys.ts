@@ -17,6 +17,12 @@ export const queryKeys = {
   draws: {
     list: (committeeId: string) => ['draws', 'list', committeeId] as const,
   },
+  payments: {
+    list: (committeeId: string) => ['payments', 'list', committeeId] as const,
+  },
+  activity: {
+    list: (committeeId: string) => ['activity', 'list', committeeId] as const,
+  },
   members: {
     all: ['members'] as const,
     list: (committeeId: string) => ['members', 'list', committeeId] as const,

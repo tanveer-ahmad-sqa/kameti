@@ -263,14 +263,26 @@ isOneToOne: false
 "choose_turn":
 { Args: { "p_committee_id": string,"p_turn": number }; Returns: undefined
                            },
+"claim_payment":
+{ Args: { "p_method"?: Database["public"]['Enums']["payment_method"],"p_note"?: string,"p_payment_id": string }; Returns: undefined
+                           },
 "committee_organizer_name":
 { Args: { "p_committee_id": string }; Returns: string
                            },
 "complete_payout":
 { Args: { "p_cycle_id": string,"p_note"?: string }; Returns: undefined
                            },
+"confirm_payment":
+{ Args: { "p_method"?: Database["public"]['Enums']["payment_method"],"p_note"?: string,"p_payment_id": string }; Returns: undefined
+                           },
 "create_committee":
 { Args: { "p_contribution_amount": number,"p_description"?: string,"p_due_day": number,"p_include_organizer": boolean,"p_member_count": number,"p_name": string,"p_payout_day": number,"p_payout_order_method": Database["public"]['Enums']["payout_order_method"],"p_start_month": string }; Returns: string
+                           },
+"reject_payment_claim":
+{ Args: { "p_note"?: string,"p_payment_id": string }; Returns: undefined
+                           },
+"revert_payment":
+{ Args: { "p_payment_id": string }; Returns: undefined
                            },
 "revert_payout":
 { Args: { "p_cycle_id": string }; Returns: undefined

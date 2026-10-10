@@ -7,7 +7,7 @@ Committee (ROSCA) management app for Pakistan. Expo SDK 57 + Supabase. Read [AGE
 - [x] Phase 1: project setup, schema + migrations + RLS + pgTAP tests, phone OTP auth
 - [x] Phase 2: create committee, manage members, invite flow
 - [x] Phase 3: payout order (server-side draw) and payout schedule
-- [ ] Phase 4: payment tracking, activity log UI, dashboard, history
+- [x] Phase 4: payment tracking, activity log UI, dashboard, history
 - [ ] Phase 5: push notifications and scheduled reminders
 - [ ] Phase 6: polish, accessibility, error handling, EAS, store readiness
 
@@ -64,7 +64,17 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - Requires all N members, N assigned turns and a start month that isn't in the past.
   - Creates one `cycles` row per month. Turn n has `due_date` = start_month + (n−1) months on `due_day`, and `payout_date` the same on `payout_day`.
   - Creates one `payments` row per member per cycle. Everyone pays every month, including that month's recipient.
-- **Payouts:** `complete_payout(cycle, note)` and `revert_payout(cycle)`, organizer and active only. Both are logged by the cycles trigger. Automatically marking a committee completed is deferred to Phase 4, since it needs payment state.
+- **Payouts:** `complete_payout(cycle, note)` and `revert_payout(cycle)`, organizer and active only. Both are logged by the cycles trigger.
+- **Payments** (only through RPCs; every change is logged by the payments trigger):
+  - `claim_payment(id, method?, note?)`: the member who owes it ("I've paid") → `awaiting_confirmation`.
+  - `confirm_payment(id, method?, note?)`: organizer; marks paid directly or confirms a claim, keeping `claimed_at`.
+  - `reject_payment_claim(id, note?)`: organizer; back to pending, or late if the due date has passed.
+  - `revert_payment(id)`: organizer undo; back to pending or late.
+  - Outsiders get `not_found` (no existence leak). Everything requires an active committee.
+- **Late job:** pg_cron `kameti-mark-late-payments` runs `private.mark_late_payments()` at 19:05 UTC (00:05 Karachi). It flips pending to late when `due_date < today` in Karachi, as the system actor. The app also shows "late" immediately via `effectiveStatus()`, so it never waits for the job.
+- **Completion:** triggers on cycles and payments call `private.maybe_complete_committee()`. Once every payout is completed and every payment paid, the committee becomes `completed`, and is read-only from then on (RPCs require `active`).
+- **Dashboards and history are computed client-side** from `useCommitteeData(id)` (committee, members, cycles, payments; at most 2,500 payments). The pure logic is in `src/features/payments/stats.ts` (current month, month summary, streak, progress) and `src/features/history/history.ts` (filters, WhatsApp summary), all unit-tested.
+- **"Collected"** counts only confirmed (`paid`) money. Claims are shown separately as "waiting for confirmation".
 - **Random draw:**
   - Runs in an Edge Function with `crypto.getRandomValues` (Fisher–Yates with rejection sampling, `supabase/functions/_shared/secureShuffle.ts`). It is unit-tested for uniformity in Jest.
   - Edge Functions return `{ error: '<code>' }` with the database's codes. The app's `functionError()` turns these into the same shape as RPC errors.
@@ -114,6 +124,8 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - Colors come from `useTheme()`, never hard-coded.
 - **Every data screen** handles loading, empty, error (with retry), offline (`OfflineBanner` via `Screen`) and pull-to-refresh.
 - **Accessibility:** buttons have roles and labels, inputs have labels and hints, errors use `accessibilityRole="alert"` with a live region.
+- **Keep screens' heavy imports out of shared UI.** Small display pieces used by several features (e.g. `payments/PaymentDisplay.tsx`) must not import a screen. Screens pull in auth, env and Supabase, which breaks reuse and Jest.
+- **React Compiler is on:** don't hand-write `useMemo`/`useCallback`. Lint fails if the compiler can't keep an existing memo.
 - **Pickers:** use `SelectField` (full-screen list) rather than native pickers, `RadioGroup` for choices with explanations, `SwitchRow` for toggles and `confirm()` (`src/lib/confirm.ts`) for destructive actions.
 - **Money input:** keep `.` in the field so paisa is rejected by validation ("whole rupees") rather than silently turning 5000.00 into 500000.
 - **Money display:** always `formatPKR()` → "Rs 10,000". **Phone display:** `formatPkMobile()` → "0300 1234567". Phones are stored and sent as E.164 (`+923XXXXXXXXX`).
@@ -131,6 +143,10 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
 - `_shared/http.ts` is Deno-only (never imported by the app). Other `_shared` files are platform-neutral.
 - Resolve the user from the `Authorization` header with a publishable-key client, and never from the request body. Do privileged writes through a service-role client calling a service-role-only RPC that re-validates everything.
 - Type-check with `npm run functions:check` (CI runs `deno check`). Serve locally with `npm run functions:serve`.
+
+## Dependencies
+
+- `expo-asset` is a direct dependency even though nothing imports it directly. `expo-sqlite` imports it without declaring it, and relying on the copy nested under `expo/` is fragile.
 
 ## Commands
 
