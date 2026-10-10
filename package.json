@@ -65,7 +65,9 @@
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
-    "db:types": "supabase gen types typescript --local > src/types/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/types/database.types.ts",
+    "functions:check": "cd supabase/functions && npx --yes deno@2.1.4 check --config deno.json */index.ts",
+    "functions:serve": "supabase functions serve"
   },
   "private": true
 }

@@ -11,6 +11,9 @@ export default function AppLayout() {
       <Stack.Screen name="committee/[id]/index" options={{ title: '' }} />
       <Stack.Screen name="committee/[id]/edit" options={{ title: t('committee.editTitle') }} />
       <Stack.Screen name="committee/[id]/members" options={{ title: t('members.title') }} />
+      <Stack.Screen name="committee/[id]/order" options={{ title: t('order.title') }} />
+      <Stack.Screen name="committee/[id]/schedule" options={{ title: t('schedule.title') }} />
+      <Stack.Screen name="committee/[id]/swap" options={{ title: t('swap.title'), presentation: 'modal' }} />
       <Stack.Screen
         name="committee/[id]/member-form"
         options={{ title: t('members.form.addTitle'), presentation: 'modal' }}

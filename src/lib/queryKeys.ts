@@ -11,6 +11,12 @@ export const queryKeys = {
   device: {
     contacts: ['device', 'contacts'] as const,
   },
+  cycles: {
+    list: (committeeId: string) => ['cycles', 'list', committeeId] as const,
+  },
+  draws: {
+    list: (committeeId: string) => ['draws', 'list', committeeId] as const,
+  },
   members: {
     all: ['members'] as const,
     list: (committeeId: string) => ['members', 'list', committeeId] as const,

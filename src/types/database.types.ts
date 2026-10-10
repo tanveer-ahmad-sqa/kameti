@@ -251,14 +251,38 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "committee_organizer_name":
+            "activate_committee":
+{ Args: { "p_committee_id": string }; Returns: undefined
+                           },
+"apply_draw_result":
+{ Args: { "p_actor": string,"p_algorithm": string,"p_committee_id": string,"p_member_ids": (string)[] }; Returns: Json
+                           },
+"assign_turn":
+{ Args: { "p_committee_id": string,"p_member_id": string,"p_turn": number }; Returns: undefined
+                           },
+"choose_turn":
+{ Args: { "p_committee_id": string,"p_turn": number }; Returns: undefined
+                           },
+"committee_organizer_name":
 { Args: { "p_committee_id": string }; Returns: string
+                           },
+"complete_payout":
+{ Args: { "p_cycle_id": string,"p_note"?: string }; Returns: undefined
                            },
 "create_committee":
 { Args: { "p_contribution_amount": number,"p_description"?: string,"p_due_day": number,"p_include_organizer": boolean,"p_member_count": number,"p_name": string,"p_payout_day": number,"p_payout_order_method": Database["public"]['Enums']["payout_order_method"],"p_start_month": string }; Returns: string
                            },
+"revert_payout":
+{ Args: { "p_cycle_id": string }; Returns: undefined
+                           },
 "set_organizer_membership":
 { Args: { "p_committee_id": string,"p_is_member": boolean }; Returns: undefined
+                           },
+"set_payout_order":
+{ Args: { "p_committee_id": string,"p_member_ids": (string)[] }; Returns: undefined
+                           },
+"swap_payout_turns":
+{ Args: { "p_cycle_a": string,"p_cycle_b": string,"p_reason": string }; Returns: undefined
                            }
           }
           Enums: {

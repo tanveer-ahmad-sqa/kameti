@@ -1,0 +1,59 @@
+# Maestro E2E: the organizer completes the seeded "Office Kameti" (3 of 4 members, random draw),
+# runs the server-side draw, starts the committee and marks the first payout as done.
+# Prereqs: `npm run db:reset`, `npm run functions:serve`, and a dev build on a simulator/emulator.
+# Run: maestro test e2e/start-committee.yaml
+appId: pk.kameti.app.dev
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'sign-in-phone'
+- inputText: '0300 1111111'
+- tapOn: 'Send code'
+- tapOn:
+    id: 'verify-code'
+- inputText: '123456'
+- tapOn: 'Office Kameti'
+
+# Add the fourth member.
+- tapOn: 'Manage members'
+- tapOn: 'Add member'
+- tapOn:
+    id: 'member-name'
+- inputText: 'Hamza'
+- tapOn:
+    id: 'member-phone'
+- inputText: '0321 5550000'
+- tapOn:
+    id: 'member-form-submit'
+- assertVisible: 'All places are filled'
+- back
+
+# Random draw on the server.
+- tapOn:
+    id: 'committee-order'
+- tapOn:
+    id: 'order-run-draw'
+- tapOn: 'Run the draw' # confirmation dialog
+- assertVisible: 'Every month has someone assigned'
+- assertVisible: 'Draw 1 ·.*'
+- back
+
+# Start: confirmation explains what locks.
+- scrollUntilVisible:
+    element:
+      id: 'committee-start'
+- tapOn:
+    id: 'committee-start'
+- assertVisible: 'Start this committee?'
+- tapOn: 'Start committee'
+- assertVisible: 'Active'
+
+# Schedule: mark the first payout as done.
+- tapOn:
+    id: 'committee-schedule'
+- assertVisible: '0 of 4 payouts done'
+- tapOn:
+    id: 'schedule-complete-1'
+- tapOn: 'Mark as paid out' # confirmation dialog
+- assertVisible: '1 of 4 payouts done'

@@ -26,6 +26,7 @@ function isNetworkError(error: ErrorLike): boolean {
   const message = typeof error.message === 'string' ? error.message : '';
   return (
     error.name === 'AuthRetryableFetchError' ||
+    error.name === 'FunctionsFetchError' ||
     /network request failed|failed to fetch|network error|timed out/i.test(message)
   );
 }

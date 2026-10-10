@@ -6,7 +6,7 @@ Committee (ROSCA) management app for Pakistan. Expo SDK 57 + Supabase. Read [AGE
 
 - [x] Phase 1: project setup, schema + migrations + RLS + pgTAP tests, phone OTP auth
 - [x] Phase 2: create committee, manage members, invite flow
-- [ ] Phase 3: payout order (server-side draw) and payout schedule
+- [x] Phase 3: payout order (server-side draw) and payout schedule
 - [ ] Phase 4: payment tracking, activity log UI, dashboard, history
 - [ ] Phase 5: push notifications and scheduled reminders
 - [ ] Phase 6: polish, accessibility, error handling, EAS, store readiness
@@ -49,9 +49,25 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - The actor is `private.current_actor()`: the JWT `sub`, else the transaction setting `kameti.actor_id` (set by service-role RPCs acting for a user), else NULL (system).
   - `activity_log` and `payout_draws` are append-only. UPDATE and TRUNCATE always fail. DELETE only works as a cascade from deleting a draft committee.
   - Phone numbers are never logged.
-- **Post-activation turn changes:** must set `kameti.allow_locked_member_change = 'on'` inside a logged organizer RPC. The trigger refuses otherwise.
+- **Post-activation turn changes:** must set `kameti.allow_locked_member_change = 'on'` inside a logged organizer RPC. The trigger refuses otherwise. The only such RPC is `swap_payout_turns(cycle_a, cycle_b, reason)`:
+  - organizer only
+  - both months not yet paid out
+  - reason of 3–300 characters, logged as one `order.changed` entry
+  - This is the brief's "logged organizer action". Member-initiated turn swapping stays out of scope.
+- **Bulk order writes** (`private.write_order`, swaps) set `kameti.bulk_order_change = 'on'`. The member and cycle audit triggers then skip their per-row entries, and the RPC logs one entry (`order.set`, `order.drawn`, `order.changed`) with the full order.
+- **Order RPCs:**
+  - `set_payout_order` (manual: the full member list in order)
+  - `assign_turn` (organizer, member-choice; NULL clears)
+  - `choose_turn` (member picks or releases their own month)
+  - `apply_draw_result` (service role only, called by the `draw-payout-order` Edge Function with the acting user)
+- **Activation** (`activate_committee`):
+  - Requires all N members, N assigned turns and a start month that isn't in the past.
+  - Creates one `cycles` row per month. Turn n has `due_date` = start_month + (n−1) months on `due_day`, and `payout_date` the same on `payout_day`.
+  - Creates one `payments` row per member per cycle. Everyone pays every month, including that month's recipient.
+- **Payouts:** `complete_payout(cycle, note)` and `revert_payout(cycle)`, organizer and active only. Both are logged by the cycles trigger. Automatically marking a committee completed is deferred to Phase 4, since it needs payment state.
 - **Random draw:**
-  - Runs in an Edge Function with `crypto.getRandomValues` (Fisher–Yates with rejection sampling).
+  - Runs in an Edge Function with `crypto.getRandomValues` (Fisher–Yates with rejection sampling, `supabase/functions/_shared/secureShuffle.ts`). It is unit-tested for uniformity in Jest.
+  - Edge Functions return `{ error: '<code>' }` with the database's codes. The app's `functionError()` turns these into the same shape as RPC errors.
   - The result is written by a service-role RPC that also inserts into `payout_draws`.
   - Re-draws in draft are allowed but each one is permanently recorded and visible to members.
 - **Offline:**
@@ -108,6 +124,13 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - In pgTAP, clear `request.jwt.claims` (`set_config(..., '', true)`) after `reset role` when testing calls without a user; the claims outlive the role switch.
   - React Native Testing Library v14 APIs are async: `await render(...)`, `userEvent.setup()`, `await user.press(...)`.
   - Variables used inside `jest.mock` factories must be prefixed `mock`.
+
+## Edge Functions
+
+- Live in `supabase/functions/<name>/index.ts`. Imports go through `supabase/functions/deno.json` (pinned npm versions) and `deno.lock`.
+- `_shared/http.ts` is Deno-only (never imported by the app). Other `_shared` files are platform-neutral.
+- Resolve the user from the `Authorization` header with a publishable-key client, and never from the request body. Do privileged writes through a service-role client calling a service-role-only RPC that re-validates everything.
+- Type-check with `npm run functions:check` (CI runs `deno check`). Serve locally with `npm run functions:serve`.
 
 ## Commands
 

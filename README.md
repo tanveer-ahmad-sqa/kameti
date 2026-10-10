@@ -77,8 +77,13 @@ Reset the database to this state at any time with `npm run db:reset`.
 | `npm run db:reset` | Recreate the local DB from migrations + seed |
 | `npm run db:test` | pgTAP tests (RLS isolation, constraints, audit log) |
 | `npm run db:types` | Regenerate `src/types/database.types.ts` from the local schema |
+| `npm run functions:serve` | Serve Edge Functions locally (needed for the random draw) |
+| `npm run functions:check` | Type-check Edge Functions with Deno |
 
-**End-to-end (Maestro):** install [Maestro](https://maestro.dev), run `npm run db:reset`, start a dev build, then `maestro test e2e/`. The flows cover sign-in with auto-linking (`sign-in.yaml`) and creating a committee and adding a member (`create-committee.yaml`).
+**End-to-end (Maestro):** install [Maestro](https://maestro.dev), run `npm run db:reset`, start a dev build, then `maestro test e2e/`. The flows cover:
+- signing in, with automatic linking to a committee (`sign-in.yaml`)
+- creating a committee and adding a member (`create-committee.yaml`)
+- the server-side draw, starting a committee and a payout (`start-committee.yaml`, which also needs `npm run functions:serve`)
 
 **Database changes:** never edit an applied migration. Create a new one with `npx supabase migration new <name>`, run `npm run db:reset && npm run db:test && npm run db:types`, and commit the regenerated types (CI checks they are up to date).
 
@@ -114,11 +119,12 @@ You need: a Supabase project, a Twilio account with a Verify service, an Expo ac
    npx supabase link --project-ref <your-project-ref>
    npx supabase db push            # applies supabase/migrations (NOT seed.sql)
    ```
-3. **Project Settings → API keys:** copy the **Project URL** and the **Publishable key**. These become `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-4. **Authentication → Sign In / Providers:**
+3. Deploy the Edge Functions: `npx supabase functions deploy draw-payout-order`. The Supabase URL and keys are provided to functions automatically, so no secrets need setting.
+4. **Project Settings → API keys:** copy the **Project URL** and the **Publishable key**. These become `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+5. **Authentication → Sign In / Providers:**
    - **Email:** disable it (the app is phone-only).
    - **Phone:** enable it and allow new users to sign up. The SMS provider is set up in step 2 below.
-5. **Authentication → Rate limits:** keep SMS limits conservative (e.g. 30/hour) to control SMS cost and abuse.
+6. **Authentication → Rate limits:** keep SMS limits conservative (e.g. 30/hour) to control SMS cost and abuse.
 
 ### 2. Twilio Verify (SMS codes)
 
