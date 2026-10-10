@@ -78,7 +78,7 @@ Reset the database to this state at any time with `npm run db:reset`.
 | `npm run db:test` | pgTAP tests (RLS isolation, constraints, audit log) |
 | `npm run db:types` | Regenerate `src/types/database.types.ts` from the local schema |
 
-**End-to-end (Maestro):** install [Maestro](https://maestro.dev), run a dev build, then `maestro test e2e/`.
+**End-to-end (Maestro):** install [Maestro](https://maestro.dev), run `npm run db:reset`, start a dev build, then `maestro test e2e/`. The flows cover sign-in with auto-linking (`sign-in.yaml`) and creating a committee and adding a member (`create-committee.yaml`).
 
 **Database changes:** never edit an applied migration. Create a new one with `npx supabase migration new <name>`, run `npm run db:reset && npm run db:test && npm run db:types`, and commit the regenerated types (CI checks they are up to date).
 
@@ -91,6 +91,8 @@ Reset the database to this state at any time with `npm run db:reset`.
 | `EXPO_PUBLIC_SUPABASE_URL` | App | No (bundled) | `.env.local` locally; EAS environment variables for builds |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | App | No (bundled; RLS protects data) | same |
 | `EXPO_PUBLIC_SENTRY_DSN` | App | No (bundled) | same |
+| `EXPO_PUBLIC_IOS_APP_STORE_URL` | Invite messages | No | Set once the iOS app is live. Until then invites only include the Play Store link |
+| `EXPO_PUBLIC_INVITE_BASE_URL` | Invite messages | No | Future: a web domain for invite links. Leave empty in v1 |
 | `SENTRY_ORG`, `SENTRY_PROJECT` | EAS build (source map upload) | No | EAS environment variables |
 | `SENTRY_AUTH_TOKEN` | EAS build | **Yes** | EAS environment variable with **secret** visibility |
 | `EAS_PROJECT_ID` | `app.config.ts` | No | EAS environment variables (or `.env.local`) after `eas init` |

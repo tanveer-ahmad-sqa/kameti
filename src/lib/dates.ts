@@ -41,3 +41,25 @@ export function formatMonth(value: string): string {
 export function formatTimestamp(timestamp: string | Date): string {
   return format(toKarachi(timestamp), 'd MMM yyyy, h:mm a');
 }
+
+/** First day of the current month in Pakistan, as yyyy-MM-01. */
+export function currentMonthInKarachi(now: Date = new Date()): string {
+  return `${todayInKarachi(now).slice(0, 7)}-01`;
+}
+
+/** Adds whole months to a yyyy-MM-01 calendar month. */
+export function addCalendarMonths(month: string, count: number): string {
+  const date = parseCalendarDate(month);
+  return format(new Date(date.getFullYear(), date.getMonth() + count, 1), 'yyyy-MM-dd');
+}
+
+/** The current month and the next `count - 1` months, as yyyy-MM-01 strings. */
+export function upcomingMonths(count: number, now: Date = new Date()): string[] {
+  const first = currentMonthInKarachi(now);
+  return Array.from({ length: count }, (_, i) => addCalendarMonths(first, i));
+}
+
+/** Last month of a committee that starts in `startMonth` and runs one month per member. */
+export function lastCommitteeMonth(startMonth: string, memberCount: number): string {
+  return addCalendarMonths(startMonth, memberCount - 1);
+}

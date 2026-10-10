@@ -1,0 +1,47 @@
+# Maestro E2E: an organizer creates a committee and adds a member by phone.
+# Prereqs: `npm run db:reset` (loads seed.sql) and a dev build on a simulator/emulator.
+# Run: maestro test e2e/create-committee.yaml
+appId: pk.kameti.app.dev
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: 'sign-in-phone'
+- inputText: '0300 1111111'
+- tapOn: 'Send code'
+- tapOn:
+    id: 'verify-code'
+- inputText: '123456'
+# Ayesha is seeded with a name, so she lands on the home screen.
+- assertVisible: 'My committees'
+- tapOn: 'Create a committee'
+- tapOn:
+    id: 'committee-name'
+- inputText: 'Family BC'
+- tapOn:
+    id: 'committee-amount'
+- inputText: '5000'
+- tapOn:
+    id: 'committee-member-count'
+- inputText: '4'
+- hideKeyboard
+# Live pot: 5,000 x 4.
+- assertVisible: 'Rs 20,000'
+- scrollUntilVisible:
+    element: 'Create committee'
+- tapOn:
+    id: 'committee-form-submit'
+# Lands on the member list with the organizer already added.
+- assertVisible: '1 of 4 members added'
+- tapOn: 'Add member'
+- tapOn:
+    id: 'member-name'
+- inputText: 'Zainab'
+- tapOn:
+    id: 'member-phone'
+- inputText: '0333 7654321'
+- tapOn:
+    id: 'member-form-submit'
+- assertVisible: '2 of 4 members added'
+- assertVisible: 'Zainab'
+- assertVisible: 'Not joined yet'

@@ -1,5 +1,5 @@
 // Shared between the app (via the `@shared/*` path alias) and Deno edge functions.
-// Keep this file free of platform APIs and relative imports.
+// Keep this file free of platform APIs. Relative imports need the `.ts` extension (Deno).
 import { z } from 'zod';
 
 /** Pakistani mobile numbers in E.164: +92 3XX XXXXXXX. */

@@ -7,6 +7,18 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerBackTitle: t('common.back'), headerShadowVisible: false }}>
       <Stack.Screen name="index" options={{ title: t('home.title') }} />
       <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
+      <Stack.Screen name="committee/new" options={{ title: t('committee.newTitle') }} />
+      <Stack.Screen name="committee/[id]/index" options={{ title: '' }} />
+      <Stack.Screen name="committee/[id]/edit" options={{ title: t('committee.editTitle') }} />
+      <Stack.Screen name="committee/[id]/members" options={{ title: t('members.title') }} />
+      <Stack.Screen
+        name="committee/[id]/member-form"
+        options={{ title: t('members.form.addTitle'), presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="committee/[id]/contacts"
+        options={{ title: t('contacts.title'), presentation: 'modal' }}
+      />
     </Stack>
   );
 }

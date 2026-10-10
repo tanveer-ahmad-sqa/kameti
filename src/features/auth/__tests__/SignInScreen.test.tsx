@@ -23,7 +23,7 @@ describe('<SignInScreen />', () => {
     const user = userEvent.setup();
     await render(<SignInScreen />);
     await user.press(screen.getByRole('button', { name: 'Send code' }));
-    expect(await screen.findByText('Enter your mobile number.')).toBeOnTheScreen();
+    expect(await screen.findByText('Enter a mobile number.')).toBeOnTheScreen();
     expect(mockMutate).not.toHaveBeenCalled();
   });
 

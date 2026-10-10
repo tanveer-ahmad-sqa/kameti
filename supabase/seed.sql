@@ -7,15 +7,20 @@
 --   +92 300 3333333  Sana    - member of "Office Kameti", NOT registered yet
 --   +92 300 4444444  (none)  - an outsider; sees no committees
 
+-- Supabase Auth reads these token columns as strings, so they must be '' rather than NULL
+-- or signing in as this user fails with "Database error finding user".
 insert into auth.users (
   instance_id, id, aud, role, phone, phone_confirmed_at, created_at, updated_at,
-  raw_app_meta_data, raw_user_meta_data
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
 )
 values (
   '00000000-0000-0000-0000-000000000000',
   '11111111-1111-1111-1111-111111111111',
   'authenticated', 'authenticated', '923001111111', now(), now(), now(),
-  '{"provider":"phone","providers":["phone"]}', '{}'
+  '{"provider":"phone","providers":["phone"]}', '{}',
+  '', '', '', '', '', '', '', ''
 );
 
 update public.profiles set full_name = 'Ayesha' where id = '11111111-1111-1111-1111-111111111111';

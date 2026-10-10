@@ -1,6 +1,12 @@
 import NetInfo from '@react-native-community/netinfo';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import {
+  defaultShouldDehydrateQuery,
+  focusManager,
+  onlineManager,
+  QueryClient,
+  type Query,
+} from '@tanstack/react-query';
 import { AsyncStorage } from 'expo-sqlite/kv-store';
 import { AppState, Platform } from 'react-native';
 
@@ -31,6 +37,11 @@ export const queryPersister = createAsyncStoragePersister({
   key: 'kameti-query-cache',
   throttleTime: 1000,
 });
+
+/** Successful server queries are saved for offline use; on-device data (contacts) never is. */
+export function shouldPersistQuery(query: Query): boolean {
+  return query.queryKey[0] !== 'device' && defaultShouldDehydrateQuery(query);
+}
 
 /** Removes all cached server data (on sign-out, so the next user on this phone sees nothing). */
 export async function clearQueryCache(): Promise<void> {

@@ -251,7 +251,15 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "committee_organizer_name":
+{ Args: { "p_committee_id": string }; Returns: string
+                           },
+"create_committee":
+{ Args: { "p_contribution_amount": number,"p_description"?: string,"p_due_day": number,"p_include_organizer": boolean,"p_member_count": number,"p_name": string,"p_payout_day": number,"p_payout_order_method": Database["public"]['Enums']["payout_order_method"],"p_start_month": string }; Returns: string
+                           },
+"set_organizer_membership":
+{ Args: { "p_committee_id": string,"p_is_member": boolean }; Returns: undefined
+                           }
           }
           Enums: {
             "committee_status": "draft"|"active"|"completed","payment_method": "cash"|"easypaisa"|"jazzcash"|"bank_transfer","payment_status": "pending"|"awaiting_confirmation"|"paid"|"late","payout_order_method": "random"|"manual"|"member_choice","payout_status": "pending"|"completed"

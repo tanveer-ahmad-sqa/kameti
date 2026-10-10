@@ -1,14 +1,15 @@
-import type en from '@/i18n/locales/en.json';
+import en from '@/i18n/locales/en.json';
 
-export type ErrorKey = `errors.${keyof (typeof en)['errors']}`;
+type ErrorCode = keyof (typeof en)['errors'];
+export type ErrorKey = `errors.${ErrorCode}`;
 
-/** Stable error codes raised by the database (`raise exception using message = '<code>'`). */
-const DB_ERROR_KEYS: Record<string, ErrorKey> = {
-  committee_full: 'errors.committee_full',
-  committee_not_draft: 'errors.committee_not_draft',
-  committee_locked: 'errors.committee_locked',
-  turn_out_of_range: 'errors.turn_out_of_range',
-};
+/**
+ * Database business-rule errors (`raise exception using message = '<code>'`) map to
+ * `errors.<code>` in en.json. Adding the string is all that's needed for a new code.
+ */
+function isKnownErrorCode(code: string): code is ErrorCode {
+  return Object.prototype.hasOwnProperty.call(en.errors, code);
+}
 
 type ErrorLike = {
   message?: unknown;
@@ -45,7 +46,7 @@ export function errorKey(error: unknown): ErrorKey {
   if (code === 'sms_send_failed' || code === 'validation_failed') return 'errors.sms_failed';
 
   // Postgres.
-  if (code === 'P0001' && message in DB_ERROR_KEYS) return DB_ERROR_KEYS[message] ?? 'errors.unknown';
+  if (code === 'P0001' && isKnownErrorCode(message)) return `errors.${message}`;
   if (code === '23505' && message.includes('committee_members_unique_phone')) return 'errors.duplicate_phone';
   if (code === '42501') return 'errors.not_allowed';
 

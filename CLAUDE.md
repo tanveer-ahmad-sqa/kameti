@@ -5,7 +5,7 @@ Committee (ROSCA) management app for Pakistan. Expo SDK 57 + Supabase. Read [AGE
 ## Status
 
 - [x] Phase 1: project setup, schema + migrations + RLS + pgTAP tests, phone OTP auth
-- [ ] Phase 2: create committee, manage members, invite flow
+- [x] Phase 2: create committee, manage members, invite flow
 - [ ] Phase 3: payout order (server-side draw) and payout schedule
 - [ ] Phase 4: payment tracking, activity log UI, dashboard, history
 - [ ] Phase 5: push notifications and scheduled reminders
@@ -59,6 +59,12 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - Mutations use `networkMode: 'online'` and are **never queued**, because money changes must not replay later.
   - The cache is cleared on sign-out.
 - **Supabase session:** stored with `expo-sqlite/localStorage`, as in the Expo + Supabase guide.
+- **On-device data** (contacts) uses query keys under `queryKeys.device`. These are excluded from the persisted cache (`shouldPersistQuery`) and use `gcTime: 0`. Contacts are never uploaded; only the selected name and number become a member row.
+- **Committee creation** goes through `public.create_committee`, which also inserts the organizer's member row when "I'm also a member" is on. The toggle afterwards uses `public.set_organizer_membership`. If the organizer was already added by phone, that row is promoted rather than duplicated.
+- **Organizer name:** members can't read other profiles, so `public.committee_organizer_name(id)` returns it to participants only.
+- **Start month:** drafts can't be created with, or moved to, a month before the current Karachi month (`private.current_karachi_month()`). Activation re-checks this in Phase 3.
+- **Invites:** `src/features/members/invite.ts` builds the text. Links come from `inviteLinks()`: the Play Store URL, plus the App Store URL when `EXPO_PUBLIC_IOS_APP_STORE_URL` is set. Once a domain exists, setting `EXPO_PUBLIC_INVITE_BASE_URL` switches invites to a single `<base>/join/<committeeId>` link. The in-app deep link is `kameti://committee/<id>`.
+- **Phone privacy:** only the organizer's UI shows member phone numbers. RLS still lets any participant read `committee_members.phone`; restrict it with a view or column grants if that becomes a requirement.
 
 ## Database conventions
 
@@ -70,7 +76,8 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - has CHECK constraints for domain rules
 - Every new public function: `revoke execute ... from public, anon` and grant to `authenticated` only if callable by users. Use `set search_path = ''` and schema-qualify everything.
 - Helpers for RLS live in schema `private` (not exposed via the Data API): `private.is_committee_participant`, `is_committee_organizer` and `is_draft_organizer`.
-- Business-rule errors: `raise exception using errcode = 'P0001', message = '<snake_case_code>'`. Add the code to `src/lib/errors.ts` and `errors.*` in `en.json`.
+- Business-rule errors: `raise exception using errcode = 'P0001', message = '<snake_case_code>'`. Adding `errors.<code>` to `en.json` is enough: `errorKey()` maps any P0001 message that has a matching string.
+- RLS-filtered UPDATE/DELETE return zero rows instead of an error, so mutations use `.select('id')` and treat an empty result as `not_organizer`.
 - Composite FKs (`(member_id, committee_id)`, `(cycle_id, committee_id)`) guarantee child rows belong to the same committee.
 - Money: `integer` whole rupees, never floats. Calendar days (`due_date`, `start_month`) are `date`, meaning Asia/Karachi days. Instants are `timestamptz` (UTC).
 - After changing the schema, run `npm run db:reset && npm run db:test && npm run db:types` and commit `src/types/database.types.ts`. CI diffs it.
@@ -81,7 +88,7 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
 - **Routes** in `src/app/` are thin and render screens from `src/features/<feature>/`. Each feature has an `api.ts` (query and mutation hooks), screens, components and `__tests__/`.
 - **Query keys** only come from `src/lib/queryKeys.ts`.
 - **Zod schemas** shared with Edge Functions live in `supabase/functions/_shared/`, imported as `@shared/...`.
-  - Shared files import only `zod`: no relative imports and no RN or Deno APIs.
+  - Shared files import only `zod` and each other. Relative imports must include the `.ts` extension (Deno requires it; `allowImportingTsExtensions` is on). No RN or Deno APIs.
   - Messages are i18n keys (`validation.*`), translated with `translateValidation`.
 - **Strings:** all of them go in `src/i18n/locales/en.json` and are type-checked keys via `t()`. No hard-coded user-facing text.
 - **RTL readiness:** use `start`/`end` and `textAlign: 'auto'`, never left/right.
@@ -91,10 +98,14 @@ Commit after each phase. Push to `origin` (github.com/tanveer-ahmad-sqa/kameti) 
   - Colors come from `useTheme()`, never hard-coded.
 - **Every data screen** handles loading, empty, error (with retry), offline (`OfflineBanner` via `Screen`) and pull-to-refresh.
 - **Accessibility:** buttons have roles and labels, inputs have labels and hints, errors use `accessibilityRole="alert"` with a live region.
+- **Pickers:** use `SelectField` (full-screen list) rather than native pickers, `RadioGroup` for choices with explanations, `SwitchRow` for toggles and `confirm()` (`src/lib/confirm.ts`) for destructive actions.
+- **Money input:** keep `.` in the field so paisa is rejected by validation ("whole rupees") rather than silently turning 5000.00 into 500000.
 - **Money display:** always `formatPKR()` → "Rs 10,000". **Phone display:** `formatPkMobile()` → "0300 1234567". Phones are stored and sent as E.164 (`+923XXXXXXXXX`).
 - **Dates:** use the helpers in `src/lib/dates.ts`. Never call `new Date('yyyy-MM-dd')` on a calendar date.
 - **Types:** no `any` (lint error). Supabase calls are typed through the generated `Database` type.
 - **Tests:**
+  - Seeded `auth.users` rows must set the token columns (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`, `reauthentication_token`) to `''`, or Supabase Auth fails with "Database error finding user".
+  - In pgTAP, clear `request.jwt.claims` (`set_config(..., '', true)`) after `reset role` when testing calls without a user; the claims outlive the role switch.
   - React Native Testing Library v14 APIs are async: `await render(...)`, `userEvent.setup()`, `await user.press(...)`.
   - Variables used inside `jest.mock` factories must be prefixed `mock`.
 

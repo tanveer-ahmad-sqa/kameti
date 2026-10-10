@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -28,7 +29,8 @@ export function CommitteeCard({
   return (
     <Card
       testID={`committee-${committee.id}`}
-      accessibilityRole="summary"
+      onPress={() => router.push(`/committee/${committee.id}`)}
+      accessibilityHint={t('home.openHint')}
       accessibilityLabel={t('home.committeeA11y', { name: committee.name, status, amount, members })}
     >
       <View style={styles.titleRow}>

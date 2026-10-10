@@ -10,7 +10,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorState } from '@/components/ui';
 import { startAuthListener, useAuthStore } from '@/features/auth/authStore';
 import { useProfile } from '@/features/profile/api';
-import { CACHE_MAX_AGE_MS, queryClient, queryPersister, wireQueryManagers } from '@/lib/queryClient';
+import {
+  CACHE_MAX_AGE_MS,
+  queryClient,
+  queryPersister,
+  shouldPersistQuery,
+  wireQueryManagers,
+} from '@/lib/queryClient';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { useTheme } from '@/theme/useTheme';
 
@@ -89,7 +95,12 @@ function RootLayout() {
     <SafeAreaProvider>
       <PersistQueryClientProvider
         client={queryClient}
-        persistOptions={{ persister: queryPersister, maxAge: CACHE_MAX_AGE_MS, buster: CACHE_BUSTER }}
+        persistOptions={{
+          persister: queryPersister,
+          maxAge: CACHE_MAX_AGE_MS,
+          buster: CACHE_BUSTER,
+          dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+        }}
       >
         <ThemeProvider value={navigationTheme}>
           <RootNavigator />

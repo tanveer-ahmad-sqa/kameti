@@ -51,6 +51,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // Kameti only reads contacts (to add members); it never writes them.
+    blockedPermissions: ['android.permission.WRITE_CONTACTS'],
   },
   plugins: [
     'expo-router',
@@ -64,6 +66,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     'expo-sqlite',
     'expo-localization',
+    [
+      'expo-contacts',
+      {
+        contactsPermission:
+          'Kameti uses your contacts only when you choose to add committee members from them. Contacts are never uploaded.',
+      },
+    ],
     [
       '@sentry/react-native',
       {
